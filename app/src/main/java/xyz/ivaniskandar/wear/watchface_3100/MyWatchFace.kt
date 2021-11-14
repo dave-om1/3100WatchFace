@@ -16,7 +16,7 @@ import android.support.wearable.watchface.decomposition.ImageComponent
 import android.support.wearable.watchface.decomposition.WatchFaceDecomposition
 import android.support.wearable.watchface.decompositionface.DecompositionWatchFaceService
 import android.view.SurfaceHolder
-import android.widget.Toast
+//import android.widget.Toast
 
 import java.lang.ref.WeakReference
 import java.util.Calendar
@@ -50,13 +50,13 @@ class MyWatchFace : DecompositionWatchFaceService() {
          */
         private const val MSG_UPDATE_TIME = 0
 
-        private const val HOUR_STROKE_WIDTH = 5f
-        private const val MINUTE_STROKE_WIDTH = 3f
-        private const val SECOND_TICK_STROKE_WIDTH = 2f
+        private const val HOUR_STROKE_WIDTH = 10f
+        private const val MINUTE_STROKE_WIDTH = 6f
+        private const val SECOND_TICK_STROKE_WIDTH = 4f
 
-        private const val CENTER_GAP_AND_CIRCLE_RADIUS = 4f
+        private const val CENTER_GAP_AND_CIRCLE_RADIUS = 8f
 
-        private const val SHADOW_RADIUS = 6f
+        private const val SHADOW_RADIUS = 2f
     }
 
     private lateinit var mCalendar: Calendar
@@ -84,7 +84,8 @@ class MyWatchFace : DecompositionWatchFaceService() {
     private lateinit var mHourPaint: Paint
     private lateinit var mMinutePaint: Paint
     private lateinit var mSecondPaint: Paint
-    private lateinit var mTickAndCirclePaint: Paint
+    private lateinit var mCirclePaint: Paint
+    private lateinit var mTickPaint: Paint
 
     private lateinit var mBackgroundPaint: Paint
     private lateinit var mBackgroundBitmap: Bitmap
@@ -102,16 +103,28 @@ class MyWatchFace : DecompositionWatchFaceService() {
         val ambientCenterY = ambientHeight / 2f
 
         // Background
+//        val bgBitmap = Canvas.drawBitmap(mBackgroundBitmap, 0f, 0f, mBackgroundPaint)
         val bgBitmap = Bitmap.createBitmap(ambientWidth, ambientHeight, Bitmap.Config.ARGB_8888)
         Canvas(bgBitmap).apply {
             drawColor(Color.BLACK)
 
-            val innerTickRadius = ambientCenterX - 10
-            val paint = Paint(mTickAndCirclePaint).apply {
-                isAntiAlias = false
-                clearShadowLayer()
+            val innerTickRadius = ambientCenterX - 30
+            val paint = Paint(mTickPaint).apply {
+                isAntiAlias = true
+//                clearShadowLayer()
             }
-            for (tickIndex in 0..11) {
+
+            drawLine(
+                ambientCenterX + 2.5f, ambientCenterY + (-1f * innerTickRadius),
+                ambientCenterX + 2.5f, ambientCenterY + (-1f * ambientCenterX), paint
+            )
+
+            drawLine(
+                ambientCenterX - 2.5f, ambientCenterY + (-1f * innerTickRadius),
+                ambientCenterX - 2.5f, ambientCenterY + (-1f * ambientCenterX), paint
+            )
+
+            for (tickIndex in 1..11) {
                 val tickRot = (tickIndex.toDouble() * Math.PI * 2.0 / 12).toFloat()
                 val innerX = sin(tickRot.toDouble()).toFloat() * innerTickRadius
                 val innerY = (-cos(tickRot.toDouble())).toFloat() * innerTickRadius
@@ -136,14 +149,14 @@ class MyWatchFace : DecompositionWatchFaceService() {
                 .createBitmap(CENTER_GAP_AND_CIRCLE_RADIUS.toInt(), hourHeight, Bitmap.Config.ARGB_8888)
         Canvas(hourBitmap).apply {
             val paint = Paint(mHourPaint).apply {
-                isAntiAlias = false
-                clearShadowLayer()
+                isAntiAlias = true
+//                clearShadowLayer()
             }
             drawLine(
                     width / 2f,
                     0f,
                     width / 2f,
-                    height.toFloat(),
+                    height.toFloat() - 20,
                     paint
             )
         }
@@ -168,14 +181,14 @@ class MyWatchFace : DecompositionWatchFaceService() {
                 .createBitmap(CENTER_GAP_AND_CIRCLE_RADIUS.toInt(), minuteHeight, Bitmap.Config.ARGB_8888)
         Canvas(minuteBitmap).apply {
             val paint = Paint(mMinutePaint).apply {
-                isAntiAlias = false
-                clearShadowLayer()
+                isAntiAlias = true
+//                clearShadowLayer()
             }
             drawLine(
-                    width / 2f,
+                    width / 2f - 2,
                     0f,
-                    width / 2f,
-                    height.toFloat(),
+                    width / 2f + 2,
+                    height.toFloat() - 20,
                     paint
             )
         }
@@ -200,14 +213,14 @@ class MyWatchFace : DecompositionWatchFaceService() {
                 .createBitmap(CENTER_GAP_AND_CIRCLE_RADIUS.toInt(), secondHeight, Bitmap.Config.ARGB_8888)
         Canvas(secondBitmap).apply {
             val paint = Paint(mSecondPaint).apply {
-                isAntiAlias = false
-                clearShadowLayer()
+                isAntiAlias = true
+//                clearShadowLayer()
             }
             drawLine(
-                    width / 2f,
+                    width / 2f - 2,
                     0f,
-                    width / 2f,
-                    height.toFloat(),
+                    width / 2f + 2,
+                    height.toFloat() - 20,
                     paint
             )
         }
@@ -233,8 +246,8 @@ class MyWatchFace : DecompositionWatchFaceService() {
                 Bitmap.Config.ARGB_8888
         )
         Canvas(circleBitmap).apply {
-            val paint = Paint(mTickAndCirclePaint).apply {
-                isAntiAlias = false
+            val paint = Paint(mTickPaint).apply {
+                isAntiAlias = true
                 clearShadowLayer()
             }
             val innerPaint = Paint(paint).apply {
@@ -261,7 +274,8 @@ class MyWatchFace : DecompositionWatchFaceService() {
                 .build()
 
         return WatchFaceDecomposition.Builder().apply {
-            addImageComponents(bgComponent, hourComponent, minuteComponent, secondComponent, circleComponent)
+            addImageComponents(bgComponent, hourComponent, minuteComponent, secondComponent,
+                circleComponent)
         }.build()
     }
 
@@ -276,45 +290,50 @@ class MyWatchFace : DecompositionWatchFaceService() {
     }
 
     private fun updateWatchHandStyle() {
-        if (mAmbient) {
-            mHourPaint.color = Color.WHITE
-            mMinutePaint.color = Color.WHITE
-            mSecondPaint.color = Color.WHITE
-            mTickAndCirclePaint.color = Color.WHITE
+//        if (mAmbient) {
+//            mHourPaint.color = Color.WHITE
+//            mMinutePaint.color = Color.WHITE
+//            mSecondPaint.color = Color.WHITE
+//            mCirclePaint.color = Color.WHITE
+//
+//            mHourPaint.isAntiAlias = false
+//            mMinutePaint.isAntiAlias = false
+//            mSecondPaint.isAntiAlias = false
+//            mCirclePaint.isAntiAlias = false
+//
+//            mHourPaint.clearShadowLayer()
+//            mMinutePaint.clearShadowLayer()
+//            mSecondPaint.clearShadowLayer()
+//            mCirclePaint.clearShadowLayer()
+//        } else {
+        mHourPaint.color = mWatchHandColor
+        mMinutePaint.color = mWatchHandColor
+        mSecondPaint.color = mWatchHandHighlightColor
+        mCirclePaint.color = mWatchHandHighlightColor
+        mTickPaint.color = mWatchHandColor
 
-            mHourPaint.isAntiAlias = false
-            mMinutePaint.isAntiAlias = false
-            mSecondPaint.isAntiAlias = false
-            mTickAndCirclePaint.isAntiAlias = false
+        mHourPaint.isAntiAlias = true
+        mMinutePaint.isAntiAlias = true
+        mSecondPaint.isAntiAlias = true
+        mCirclePaint.isAntiAlias = true
+        mTickPaint.isAntiAlias = true
 
-            mHourPaint.clearShadowLayer()
-            mMinutePaint.clearShadowLayer()
-            mSecondPaint.clearShadowLayer()
-            mTickAndCirclePaint.clearShadowLayer()
-        } else {
-            mHourPaint.color = mWatchHandColor
-            mMinutePaint.color = mWatchHandColor
-            mSecondPaint.color = mWatchHandHighlightColor
-            mTickAndCirclePaint.color = mWatchHandColor
-
-            mHourPaint.isAntiAlias = true
-            mMinutePaint.isAntiAlias = true
-            mSecondPaint.isAntiAlias = true
-            mTickAndCirclePaint.isAntiAlias = true
-
-            mHourPaint.setShadowLayer(
-                    SHADOW_RADIUS, 0f, 0f, mWatchHandShadowColor
-            )
-            mMinutePaint.setShadowLayer(
-                    SHADOW_RADIUS, 0f, 0f, mWatchHandShadowColor
-            )
-            mSecondPaint.setShadowLayer(
-                    SHADOW_RADIUS, 0f, 0f, mWatchHandShadowColor
-            )
-            mTickAndCirclePaint.setShadowLayer(
-                    SHADOW_RADIUS, 0f, 0f, mWatchHandShadowColor
-            )
-        }
+        mHourPaint.setShadowLayer(
+                SHADOW_RADIUS, 0f, 0f, mWatchHandShadowColor
+        )
+        mMinutePaint.setShadowLayer(
+                SHADOW_RADIUS, 0f, 0f, mWatchHandShadowColor
+        )
+        mSecondPaint.setShadowLayer(
+                SHADOW_RADIUS, 0f, 0f, mWatchHandShadowColor
+        )
+        mCirclePaint.setShadowLayer(
+                SHADOW_RADIUS, 0f, 0f, mWatchHandShadowColor
+        )
+        mTickPaint.setShadowLayer(
+                SHADOW_RADIUS, 0f, 0f, mWatchHandShadowColor
+        )
+//        }
     }
 
     private fun initializeBackground() {
@@ -326,17 +345,17 @@ class MyWatchFace : DecompositionWatchFaceService() {
         /* Extracts colors from background image to improve watchface style. */
         Palette.from(mBackgroundBitmap).generate {
             it?.let {
-                mWatchHandHighlightColor = it.getVibrantColor(Color.RED)
-                mWatchHandColor = it.getLightVibrantColor(Color.WHITE)
-                mWatchHandShadowColor = it.getDarkMutedColor(Color.BLACK)
+                mWatchHandHighlightColor = it.getVibrantColor(Color.WHITE)
+                mWatchHandColor = it.getLightVibrantColor(Color.LTGRAY)
+                mWatchHandShadowColor = it.getDarkMutedColor(Color.DKGRAY)
             }
         }
     }
 
     private fun initializeWatchFace() {
         /* Set defaults for colors */
-        mWatchHandColor = Color.WHITE
-        mWatchHandHighlightColor = Color.RED
+        mWatchHandColor = Color.GRAY
+        mWatchHandHighlightColor = Color.LTGRAY
         mWatchHandShadowColor = Color.BLACK
 
         mHourPaint = Paint().apply {
@@ -369,9 +388,19 @@ class MyWatchFace : DecompositionWatchFaceService() {
             )
         }
 
-        mTickAndCirclePaint = Paint().apply {
-            color = mWatchHandColor
+        mCirclePaint = Paint().apply {
+            color = mWatchHandHighlightColor
             strokeWidth = SECOND_TICK_STROKE_WIDTH
+            isAntiAlias = true
+            style = Paint.Style.STROKE
+            setShadowLayer(
+                SHADOW_RADIUS, 0f, 0f, mWatchHandShadowColor
+            )
+        }
+
+        mTickPaint = Paint().apply {
+            color = mWatchHandColor
+            strokeWidth = 3f
             isAntiAlias = true
             style = Paint.Style.STROKE
             setShadowLayer(
@@ -492,66 +521,69 @@ class MyWatchFace : DecompositionWatchFaceService() {
              * selecting their own photos for the watch face), it will be more
              * efficient to create a black/white version (png, etc.) and load that when you need it.
              */
-            if (!mBurnInProtection && !mLowBitAmbient) {
-                initGrayBackgroundBitmap()
-            }
+//            if (!mBurnInProtection && !mLowBitAmbient) {
+//                initGrayBackgroundBitmap()
+//            }
+//            initGrayBackgroundBitmap()
         }
-
-        private fun initGrayBackgroundBitmap() {
-            mGrayBackgroundBitmap = Bitmap.createBitmap(
-                mBackgroundBitmap.width,
-                mBackgroundBitmap.height,
-                Bitmap.Config.ARGB_8888
-            )
-            val canvas = Canvas(mGrayBackgroundBitmap)
-            val grayPaint = Paint()
-            val colorMatrix = ColorMatrix()
-            colorMatrix.setSaturation(0f)
-            val filter = ColorMatrixColorFilter(colorMatrix)
-            grayPaint.colorFilter = filter
-            canvas.drawBitmap(mBackgroundBitmap, 0f, 0f, grayPaint)
-        }
+//
+//        private fun initGrayBackgroundBitmap() {
+//            mGrayBackgroundBitmap = Bitmap.createBitmap(
+//                mBackgroundBitmap.width,
+//                mBackgroundBitmap.height,
+//                Bitmap.Config.ARGB_8888
+//            )
+//            val canvas = Canvas(mGrayBackgroundBitmap)
+//            val grayPaint = Paint()
+//            val colorMatrix = ColorMatrix()
+//            colorMatrix.setSaturation(0f)
+//            val filter = ColorMatrixColorFilter(colorMatrix)
+//            grayPaint.colorFilter = filter
+//            canvas.drawBitmap(mBackgroundBitmap, 0f, 0f, grayPaint)
+//        }
 
         /**
          * Captures tap event (and tap type). The [WatchFaceService.TAP_TYPE_TAP] case can be
          * used for implementing specific logic to handle the gesture.
          */
-        override fun onTapCommand(tapType: Int, x: Int, y: Int, eventTime: Long) {
-            when (tapType) {
-                WatchFaceService.TAP_TYPE_TOUCH -> {
-                    // The user has started touching the screen.
-                }
-                WatchFaceService.TAP_TYPE_TOUCH_CANCEL -> {
-                    // The user has started a different gesture or otherwise cancelled the tap.
-                }
-                WatchFaceService.TAP_TYPE_TAP ->
-                    // The user has completed the tap gesture.
-                    // TODO: Add code to handle the tap gesture.
-                    Toast.makeText(applicationContext, R.string.message, Toast.LENGTH_SHORT)
-                        .show()
-            }
-            invalidate()
-        }
+//        override fun onTapCommand(tapType: Int, x: Int, y: Int, eventTime: Long) {
+//            when (tapType) {
+//                WatchFaceService.TAP_TYPE_TOUCH -> {
+//                    // The user has started touching the screen.
+//                }
+//                WatchFaceService.TAP_TYPE_TOUCH_CANCEL -> {
+//                    // The user has started a different gesture or otherwise cancelled the tap.
+//                }
+//                WatchFaceService.TAP_TYPE_TAP ->
+//                    // The user has completed the tap gesture.
+//                    // TODO: Add code to handle the tap gesture.
+//                    Toast.makeText(applicationContext, R.string.message, Toast.LENGTH_SHORT)
+//                        .show()
+//            }
+//            invalidate()
+//        }
 
 
         override fun onDraw(canvas: Canvas, bounds: Rect) {
             val now = System.currentTimeMillis()
             mCalendar.timeInMillis = now
 
-            drawBackground(canvas)
+            canvas.drawBitmap(mBackgroundBitmap, 0f, 0f, mBackgroundPaint)
             drawWatchFace(canvas)
         }
 
-        private fun drawBackground(canvas: Canvas) {
-
-            if (mAmbient && (mLowBitAmbient || mBurnInProtection)) {
-                canvas.drawColor(Color.BLACK)
-            } else if (mAmbient) {
-                canvas.drawBitmap(mGrayBackgroundBitmap, 0f, 0f, mBackgroundPaint)
-            } else {
-                canvas.drawBitmap(mBackgroundBitmap, 0f, 0f, mBackgroundPaint)
-            }
-        }
+//        private fun drawBackground(canvas: Canvas) {
+//            canvas.drawBitmap(mBackgroundBitmap, 0f, 0f, mBackgroundPaint)
+////            if (mAmbient && (mLowBitAmbient || mBurnInProtection)) {
+//////                canvas.drawColor(Color.BLACK)
+////                canvas.drawBitmap(mBackgroundBitmap, 0f, 0f, mBackgroundPaint)
+////            } else if (mAmbient) {
+//////                canvas.drawBitmap(mGrayBackgroundBitmap, 0f, 0f, mBackgroundPaint)
+////                canvas.drawBitmap(mBackgroundBitmap, 0f, 0f, mBackgroundPaint)
+////            } else {
+////                canvas.drawBitmap(mBackgroundBitmap, 0f, 0f, mBackgroundPaint)
+////            }
+//        }
 
         private fun drawWatchFace(canvas: Canvas) {
 
@@ -560,19 +592,19 @@ class MyWatchFace : DecompositionWatchFaceService() {
              * cases where you want to allow users to select their own photos, this dynamically
              * creates them on top of the photo.
              */
-            val innerTickRadius = mCenterX - 10
-            val outerTickRadius = mCenterX
-            for (tickIndex in 0..11) {
-                val tickRot = (tickIndex.toDouble() * Math.PI * 2.0 / 12).toFloat()
-                val innerX = sin(tickRot.toDouble()).toFloat() * innerTickRadius
-                val innerY = (-cos(tickRot.toDouble())).toFloat() * innerTickRadius
-                val outerX = sin(tickRot.toDouble()).toFloat() * outerTickRadius
-                val outerY = (-cos(tickRot.toDouble())).toFloat() * outerTickRadius
-                canvas.drawLine(
-                    mCenterX + innerX, mCenterY + innerY,
-                    mCenterX + outerX, mCenterY + outerY, mTickAndCirclePaint
-                )
-            }
+//            val innerTickRadius = mCenterX - 10
+//            val outerTickRadius = mCenterX
+//            for (tickIndex in 0..11) {
+//                val tickRot = (tickIndex.toDouble() * Math.PI * 2.0 / 12).toFloat()
+//                val innerX = sin(tickRot.toDouble()).toFloat() * innerTickRadius
+//                val innerY = (-cos(tickRot.toDouble())).toFloat() * innerTickRadius
+//                val outerX = sin(tickRot.toDouble()).toFloat() * outerTickRadius
+//                val outerY = (-cos(tickRot.toDouble())).toFloat() * outerTickRadius
+//                canvas.drawLine(
+//                    mCenterX + innerX, mCenterY + innerY,
+//                    mCenterX + outerX, mCenterY + outerY, mTickAndCirclePaint
+//                )
+//            }
 
             /*
              * These calculations reflect the rotation in degrees per unit of time, e.g.,
@@ -629,7 +661,7 @@ class MyWatchFace : DecompositionWatchFaceService() {
                 mCenterX,
                 mCenterY,
                 CENTER_GAP_AND_CIRCLE_RADIUS,
-                mTickAndCirclePaint
+                mCirclePaint
             )
 
             /* Restore the canvas' original orientation. */
